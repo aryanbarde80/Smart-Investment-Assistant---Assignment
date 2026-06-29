@@ -1,0 +1,135 @@
+
+    <!doctype html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Swagger API Test Results</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 32px; color: #1f2937; }
+        h1 { margin-bottom: 8px; }
+        .note { margin-bottom: 24px; color: #4b5563; }
+        section { border: 1px solid #d1d5db; border-left: 6px solid #49cc90; border-radius: 6px; margin: 16px 0; padding: 16px; }
+        h2 { font-size: 18px; margin: 0 0 8px; }
+        pre { background: #f6f8fa; border-radius: 6px; padding: 12px; white-space: pre-wrap; word-break: break-word; }
+      </style>
+    </head>
+    <body>
+      <h1>Swagger API Test Results</h1>
+      <p class="note">These endpoint results were produced against the same local FastAPI server shown in Swagger UI.</p>
+      
+            <section>
+              <h2>GET /</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>{
+  "status": "ok",
+  "service": "Smart Investment Assistant"
+}</pre>
+            </section>
+            
+            <section>
+              <h2>GET /health</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>{
+  "status": "healthy"
+}</pre>
+            </section>
+            
+            <section>
+              <h2>POST /api/reports</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>{
+  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "filename": "demo-financial-report.pdf",
+  "uploaded_at": "2026-06-29T12:27:35.793310Z",
+  "pages": 1,
+  "text_blocks": 1,
+  "tables": 0,
+  "images": 0,
+  "numeric_warnings": []
+}</pre>
+            </section>
+            
+            <section>
+              <h2>GET /api/reports</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>[
+  {
+    "report_id": "83bc8748b6b44a158591271cb6e14efe",
+    "filename": "demo-financial-report.pdf",
+    "uploaded_at": "2026-06-29T12:27:35.793310Z",
+    "pages": 1,
+    "text_blocks": 1,
+    "tables": 0,
+    "images": 0,
+    "numeric_warnings": []
+  },
+  {
+    "report_id": "1f167dc0682a43bd9cc44c838d89d9cb",
+    "filename": "sample.pdf",
+    "uploaded_at": "2026-06-29T12:03:53.979667Z",
+    "pages": 1,
+    "text_blocks": 1,
+    "tables": 0,
+    "images": 0,
+    "numeric_warnings": []
+  }
+]</pre>
+            </section>
+            
+            <section>
+              <h2>GET /api/reports/{report_id}</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>{
+  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "filename": "demo-financial-report.pdf",
+  "uploaded_at": "2026-06-29T12:27:35.793310Z",
+  "pages": 1,
+  "text_blocks": 1,
+  "tables": 0,
+  "images": 0,
+  "numeric_warnings": [],
+  "text_preview": "Smart Investment Assistant Demo Financial Report\nFiscal Year 2025\nRevenue: $1,250,000\nNet Profit: $310,000\nEBITDA: $470,000\nCash and equivalents: $90,000\nTotal assets: $2,400,000\nTotal liabilities: $860,000",
+  "tables_preview": [],
+  "images_preview": [],
+  "metrics": {
+    "detected_numbers": [
+      "2025",
+      "$1,250,000",
+      "$310,000",
+      "$470,000",
+      "$90,000",
+      "$2,400,000",
+      "$860,000"
+    ],
+    "table_count": 0,
+    "image_count": 0,
+    "has_chart_ocr": false
+  }
+}</pre>
+            </section>
+            
+            <section>
+              <h2>POST /api/query</h2>
+              <p><strong>Status:</strong> 200</p>
+              <pre>{
+  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "question": "What was the revenue and net profit?",
+  "answer": "Relevant extracted financial data:\n- Smart Investment Assistant Demo Financial Report Fiscal Year 2025 Revenue: $1,250,000 Net Profit: $310,000 EBITDA: $470,000 Cash and equivalents: $90,000 Total assets: $2,400,000 Total liabilities: $860,000",
+  "confidence": "medium",
+  "sources": [
+    "page 1"
+  ]
+}</pre>
+            </section>
+            
+            <section>
+              <h2>POST /api/reports invalid file</h2>
+              <p><strong>Status:</strong> 415</p>
+              <pre>{
+  "detail": "Only PDF uploads are supported."
+}</pre>
+            </section>
+            
+    </body>
+    </html>
+    

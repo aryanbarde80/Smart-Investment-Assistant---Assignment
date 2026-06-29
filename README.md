@@ -45,6 +45,12 @@ Open Swagger UI at:
 http://127.0.0.1:8000/docs
 ```
 
+## Run Tests
+
+```bash
+pytest
+```
+
 ## API Endpoints
 
 ### `GET /`
@@ -140,6 +146,8 @@ Note: Vercel serverless storage is ephemeral. For production persistence, connec
    - `Summarize the profit figures.`
    - `Which tables contain cash or assets?`
 
+Swagger screenshot evidence and live endpoint test results are documented in [`docs/SWAGGER_DEMO.md`](docs/SWAGGER_DEMO.md).
+
 ## Accuracy Notes
 
 Financial extraction accuracy depends on PDF quality:
@@ -148,4 +156,3 @@ Financial extraction accuracy depends on PDF quality:
 - Scanned PDFs require OCR.
 - Embedded chart OCR requires local `pytesseract` and a Tesseract binary installed on the host.
 - Numeric warnings help identify values that should be manually checked before investment decisions.
-
