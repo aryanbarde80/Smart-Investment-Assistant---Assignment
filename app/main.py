@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from app.config import Settings, get_settings
 from app.schemas import QueryRequest, QueryResponse, ReportDetail, ReportSummary
@@ -7,6 +10,8 @@ from app.services.extractor import extract_financial_report
 from app.services.qa import answer_question
 from app.services.security import validate_pdf_upload
 from app.storage import JsonReportStore
+
+_TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 app = FastAPI(
     title="Smart Investment Assistant",
@@ -48,6 +53,13 @@ def root() -> dict[str, str]:
 @app.get("/health", tags=["Health"])
 def health() -> dict[str, str]:
     return {"status": "healthy"}
+
+
+@app.get("/ui-testing", tags=["Testing"], response_class=HTMLResponse)
+def ui_testing() -> HTMLResponse:
+    """Interactive browser-based API testing console."""
+    html = (_TEMPLATES_DIR / "ui_testing.html").read_text(encoding="utf-8")
+    return HTMLResponse(content=html)
 
 
 @app.post("/api/reports", response_model=ReportSummary, tags=["Reports"])
