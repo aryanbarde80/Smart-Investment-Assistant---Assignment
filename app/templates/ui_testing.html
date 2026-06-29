@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Investment Assistant — API Testing</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222636;
+      --border: #2e3347;
+      --accent: #6c63ff;
+      --accent2: #4ecdc4;
+      --success: #2ecc71;
+      --error: #e74c3c;
+      --warning: #f39c12;
+      --text: #e8eaf0;
+      --muted: #8892a4;
+      --code-bg: #12141e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+    header span { color: var(--muted); font-size: 13px; margin-left: 8px; }
+    .badge {
+      margin-left: auto;
+      background: rgba(108,99,255,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    /* ── Layout ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+    }
+    /* ── Sidebar ── */
+    .sidebar { display: flex; flex-direction: column; gap: 8px; }
+    .sidebar-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 8px 0 4px;
+    }
+    .endpoint-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text);
+      text-align: left;
+      width: 100%;
+    }
+    .endpoint-btn:hover { border-color: var(--accent); background: var(--surface2); }
+    .endpoint-btn.active { border-color: var(--accent); background: rgba(108,99,255,0.1); }
+    .method {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 7px;
+      border-radius: 5px;
+      min-width: 40px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+    .GET  { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .POST { background: rgba(108,99,255,0.15); color: #a29bfe; }
+    .endpoint-name { font-size: 13px; font-weight: 500; }
+    .endpoint-path { font-size: 11px; color: var(--muted); font-family: monospace; }
+    /* ── Main Panel ── */
+    .main { display: flex; flex-direction: column; gap: 20px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .panel-header h2 { font-size: 15px; font-weight: 600; }
+    .panel-header .desc { color: var(--muted); font-size: 13px; margin-left: auto; }
+    .panel-body { padding: 20px; }
+    /* ── Form Controls ── */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .field input, .field textarea, .field select {
+      width: 100%;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .field .hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+    /* File Drop Zone */
+    .dropzone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .dropzone:hover, .dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(108,99,255,0.05);
+    }
+    .dropzone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .dropzone-icon { font-size: 32px; margin-bottom: 10px; }
+    .dropzone-text { font-size: 14px; color: var(--muted); }
+    .dropzone-text strong { color: var(--text); }
+    .dropzone-filename {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--accent2);
+      font-family: monospace;
+    }
+    /* Prefill chips */
+    .prefill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .prefill-chip {
+      font-size: 11px;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      background: transparent;
+    }
+    .prefill-chip:hover { border-color: var(--accent2); color: var(--accent2); }
+    /* Run button */
+    .run-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 24px;
+      background: linear-gradient(135deg, var(--accent), #8b80ff);
+      border: none;
+      border-radius: 9px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .run-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .run-btn:active { transform: translateY(0); }
+    .run-btn.loading { opacity: 0.7; cursor: not-allowed; }
+    /* Response Panel */
+    .response-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      background: var(--code-bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .status-pill {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .status-2xx { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .status-4xx { background: rgba(231,76,60,0.15);  color: #e74c3c; }
+    .status-5xx { background: rgba(231,76,60,0.15);  color: #e74c3c; }
+    .resp-time { color: var(--muted); }
+    .copy-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    pre {
+      background: var(--code-bg);
+      padding: 20px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12.5px;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: var(--text);
+      min-height: 80px;
+    }
+    .placeholder-text {
+      color: var(--muted);
+      font-style: italic;
+      font-family: sans-serif;
+      font-size: 13px;
+    }
+    /* Syntax highlights */
+    .json-key    { color: #a29bfe; }
+    .json-str    { color: #55efc4; }
+    .json-num    { color: #fdcb6e; }
+    .json-bool   { color: #fd79a8; }
+    .json-null   { color: #b2bec3; }
+    /* Request preview */
+    .req-preview {
+      padding: 14px 20px;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      font-family: monospace;
+    }
+    /* Visual flow */
+    .flow-steps {
+      display: flex;
+      gap: 10px;
+      padding: 16px 20px;
+      background: var(--code-bg);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .flow-step .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+    .flow-step.active .dot { background: var(--accent); }
+    .flow-step.done .dot   { background: var(--success); }
+    .flow-step.error .dot  { background: var(--error); }
+    .flow-step.active span { color: var(--accent); }
+    .flow-step.done span   { color: var(--success); }
+    .divider {
+      width: 20px; height: 1px;
+      background: var(--border);
+      align-self: center;
+    }
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab {
+      padding: 12px 20px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    /* Report cards */
+    .report-card {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .report-card:hover { border-color: var(--accent2); }
+    .report-card .rid {
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--accent2);
+    }
+    .report-card .rname { font-size: 13px; margin-top: 4px; }
+    .report-card .rmeta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    /* Empty state */
+    .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+      .sidebar { flex-direction: row; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">📊</div>
+  <h1>Smart Investment Assistant</h1>
+  <span>API Testing Console</span>
+  <div class="badge">v1.0.0</div>
+</header>
+
+<div class="container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Health</div>
+    <button class="endpoint-btn active" onclick="selectEndpoint('health-root')">
+      <span class="method GET">GET</span>
+      <div>
+        <div class="endpoint-name">Root</div>
+        <div class="endpoint-path">/</div>
+      </div>
+    </button>
+    <button class="endpoint-btn" onclick="selectEndpoint('health-check')">
+      <span class="method GET">GET</span>
+      <div>
+        <div class="endpoint-name">Health Check</div>
+        <div class="endpoint-path">/health</div>
+      </div>
+    </button>
+
+    <div class="sidebar-title" style="margin-top:12px">Reports</div>
+    <button class="endpoint-btn" onclick="selectEndpoint('upload-report')">
+      <span class="method POST">POST</span>
+      <div>
+        <div class="endpoint-name">Upload Report</div>
+        <div class="endpoint-path">/api/reports</div>
+      </div>
+    </button>
+    <button class="endpoint-btn" onclick="selectEndpoint('list-reports')">
+      <span class="method GET">GET</span>
+      <div>
+        <div class="endpoint-name">List Reports</div>
+        <div class="endpoint-path">/api/reports</div>
+      </div>
+    </button>
+    <button class="endpoint-btn" onclick="selectEndpoint('get-report')">
+      <span class="method GET">GET</span>
+      <div>
+        <div class="endpoint-name">Get Report Detail</div>
+        <div class="endpoint-path">/api/reports/:id</div>
+      </div>
+    </button>
+
+    <div class="sidebar-title" style="margin-top:12px">Q&amp;A</div>
+    <button class="endpoint-btn" onclick="selectEndpoint('query-report')">
+      <span class="method POST">POST</span>
+      <div>
+        <div class="endpoint-name">Query Report</div>
+        <div class="endpoint-path">/api/query</div>
+      </div>
+    </button>
+
+    <div class="sidebar-title" style="margin-top:16px">Quick Actions</div>
+    <button class="endpoint-btn" onclick="runFlow()" style="border-color: rgba(108,99,255,0.4)">
+      <span style="font-size:16px">⚡</span>
+      <div>
+        <div class="endpoint-name">Run All Health</div>
+        <div class="endpoint-path">/ + /health</div>
+      </div>
+    </button>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main" id="mainPanel">
+    <!-- Content injected by JS -->
+  </main>
+</div>
+
+<script>
+  const BASE = window.location.origin;
+  let currentEndpoint = 'health-root';
+  let uploadedFile = null;
+  let lastReportId = null;
+
+  const endpoints = {
+    'health-root': {
+      method: 'GET', path: '/', name: 'Root',
+      desc: 'Check if the service is running.',
+      fields: [],
+    },
+    'health-check': {
+      method: 'GET', path: '/health', name: 'Health Check',
+      desc: 'Returns service health status.',
+      fields: [],
+    },
+    'upload-report': {
+      method: 'POST', path: '/api/reports', name: 'Upload Financial Report',
+      desc: 'Upload a PDF financial report for extraction and storage.',
+      fields: [{ type: 'file', name: 'file', label: 'PDF Report File', required: true }],
+    },
+    'list-reports': {
+      method: 'GET', path: '/api/reports', name: 'List All Reports',
+      desc: 'Retrieve all uploaded financial reports.',
+      fields: [],
+    },
+    'get-report': {
+      method: 'GET', path: '/api/reports/{report_id}', name: 'Get Report Detail',
+      desc: 'Fetch full details, text preview, tables and metrics for a specific report.',
+      fields: [
+        {
+          type: 'text', name: 'report_id', label: 'Report ID',
+          placeholder: 'e.g. abc123-def456',
+          hint: 'Copy from a list-reports response or click a saved report ID below.',
+          prefills: []
+        }
+      ],
+    },
+    'query-report': {
+      method: 'POST', path: '/api/query', name: 'Query Report (Q&A)',
+      desc: 'Ask a natural-language question grounded in an uploaded report.',
+      fields: [
+        {
+          type: 'text', name: 'report_id', label: 'Report ID',
+          placeholder: 'e.g. abc123-def456',
+          hint: 'The report to query against.',
+          prefills: []
+        },
+        {
+          type: 'textarea', name: 'question', label: 'Question',
+          placeholder: 'What was the total revenue last year?',
+          hint: 'Ask anything about the uploaded financial report.',
+          prefills: [
+            'What was the total revenue?',
+            'What are the net earnings?',
+            'Show me the EBITDA figures.',
+            'What is the earnings per share?',
+            'Summarize the key financial metrics.',
+          ]
+        }
+      ],
+    },
+  };
+
+  function syntaxHighlight(json) {
+    if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+    return json
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        let cls = 'json-num';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'json-key' : 'json-str';
+        } else if (/true|false/.test(match)) {
+          cls = 'json-bool';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return `<span class="${cls}">${match}</span>`;
+      });
+  }
+
+  function selectEndpoint(id) {
+    currentEndpoint = id;
+    document.querySelectorAll('.endpoint-btn').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    renderPanel();
+  }
+
+  function renderPanel() {
+    const ep = endpoints[currentEndpoint];
+    const main = document.getElementById('mainPanel');
+
+    const flowSteps = [
+      { label: 'Compose', state: 'active' },
+      { label: 'Send Request', state: '' },
+      { label: 'Parse Response', state: '' },
+      { label: 'Done', state: '' },
+    ];
+
+    let fieldsHtml = '';
+    ep.fields.forEach(f => {
+      if (f.type === 'file') {
+        fieldsHtml += `
+          <div class="field">
+            <label>${f.label}${f.required ? ' <span style="color:#e74c3c">*</span>' : ''}</label>
+            <div class="dropzone" id="dropzone" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+              <input type="file" accept=".pdf,application/pdf" onchange="onFileSelect(event)" />
+              <div class="dropzone-icon">📄</div>
+              <div class="dropzone-text"><strong>Drop a PDF here</strong> or click to browse</div>
+              <div class="dropzone-filename" id="dropzone-filename">${uploadedFile ? '✓ ' + uploadedFile.name : ''}</div>
+            </div>
+          </div>`;
+      } else {
+        const prefillsHtml = f.prefills && f.prefills.length
+          ? `<div class="prefill-row">${f.prefills.map(p =>
+              `<button class="prefill-chip" onclick="prefill('${f.name}', ${JSON.stringify(p)})">${p.length > 30 ? p.slice(0,30)+'…' : p}</button>`
+            ).join('')}</div>`
+          : '';
+
+        // Auto-fill report_id from last upload
+        const autoVal = (f.name === 'report_id' && lastReportId) ? lastReportId : '';
+
+        const inputHtml = f.type === 'textarea'
+          ? `<textarea id="field-${f.name}" placeholder="${f.placeholder || ''}">${autoVal}</textarea>`
+          : `<input type="text" id="field-${f.name}" placeholder="${f.placeholder || ''}" value="${autoVal}" />`;
+
+        fieldsHtml += `
+          <div class="field">
+            <label>${f.label}</label>
+            ${prefillsHtml}
+            ${inputHtml}
+            ${f.hint ? `<div class="hint">💡 ${f.hint}</div>` : ''}
+          </div>`;
+      }
+    });
+
+    const reqPath = ep.method === 'GET'
+      ? `${BASE}${ep.path}`
+      : `${BASE}${ep.path}`;
+
+    main.innerHTML = `
+      <!-- Request panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="method ${ep.method}">${ep.method}</span>
+          <h2>${ep.name}</h2>
+          <span class="desc">${ep.desc}</span>
+        </div>
+
+        <div class="flow-steps" id="flowSteps">
+          <div class="flow-step active" id="step-0"><div class="dot"></div><span>Compose</span></div>
+          <div class="divider"></div>
+          <div class="flow-step" id="step-1"><div class="dot"></div><span>Sending…</span></div>
+          <div class="divider"></div>
+          <div class="flow-step" id="step-2"><div class="dot"></div><span>Parsing…</span></div>
+          <div class="divider"></div>
+          <div class="flow-step" id="step-3"><div class="dot"></div><span>Done</span></div>
+        </div>
+
+        <div class="req-preview" id="reqPreview">
+          <span style="color:var(--accent)">${ep.method}</span>
+          <span style="color:var(--accent2); margin-left:8px">${reqPath}</span>
+        </div>
+
+        <div class="panel-body">
+          ${fieldsHtml || `<div class="empty">No parameters required. Click <strong>Send</strong> to fire the request.</div>`}
+          <button class="run-btn" id="runBtn" onclick="runRequest()">
+            <span>▶</span> Send Request
+          </button>
+        </div>
+      </div>
+
+      <!-- Response panel -->
+      <div class="panel" id="responsePanel">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('response')">Response</div>
+          <div class="tab" onclick="switchTab('headers')">Headers</div>
+          <div class="tab" onclick="switchTab('curl')">cURL</div>
+        </div>
+
+        <div class="tab-content active" id="tab-response">
+          <div class="response-bar" id="responseBar" style="display:none">
+            <span class="status-pill" id="statusPill"></span>
+            <span class="resp-time" id="respTime"></span>
+            <button class="copy-btn" onclick="copyResponse()">Copy JSON</button>
+          </div>
+          <pre id="responseBody"><span class="placeholder-text">Response will appear here after you send the request…</span></pre>
+        </div>
+
+        <div class="tab-content" id="tab-headers">
+          <pre id="headersBody"><span class="placeholder-text">Response headers will appear here…</span></pre>
+        </div>
+
+        <div class="tab-content" id="tab-curl">
+          <pre id="curlBody">${buildCurl(ep)}</pre>
+        </div>
+      </div>
+
+      <!-- Saved Reports quick-pick (for GET /api/reports/:id and query) -->
+      ${(currentEndpoint === 'get-report' || currentEndpoint === 'query-report') ? `
+      <div class="panel">
+        <div class="panel-header">
+          <h2>📋 Saved Reports</h2>
+          <span class="desc">Click to autofill report_id</span>
+          <button class="copy-btn" style="margin-left:auto" onclick="refreshSavedReports()">↺ Refresh</button>
+        </div>
+        <div class="panel-body" id="savedReports">
+          <div class="empty">Loading reports…</div>
+        </div>
+      </div>` : ''}
+    `;
+
+    if (currentEndpoint === 'get-report' || currentEndpoint === 'query-report') {
+      refreshSavedReports();
+    }
+  }
+
+  function buildCurl(ep) {
+    let cmd = `curl -X ${ep.method} "${BASE}${ep.path}"`;
+    if (ep.method === 'POST' && ep.fields.some(f => f.type === 'file')) {
+      cmd += ` \\\n  -F "file=@/path/to/report.pdf"`;
+    } else if (ep.method === 'POST') {
+      cmd += ` \\\n  -H "Content-Type: application/json" \\\n  -d '{"report_id":"<id>","question":"<question>"}'`;
+    }
+    return cmd;
+  }
+
+  function prefill(fieldName, value) {
+    const el = document.getElementById('field-' + fieldName);
+    if (el) el.value = value;
+  }
+
+  function onFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      uploadedFile = file;
+      document.getElementById('dropzone-filename').textContent = '✓ ' + file.name;
+    }
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.add('drag-over');
+  }
+  function onDragLeave() {
+    document.getElementById('dropzone').classList.remove('drag-over');
+  }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type === 'application/pdf') {
+      uploadedFile = file;
+      document.getElementById('dropzone-filename').textContent = '✓ ' + file.name;
+    }
+  }
+
+  function setFlowStep(n, state) {
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById('step-' + i);
+      if (!el) return;
+      el.className = 'flow-step' + (i < n ? ' done' : i === n ? (' ' + state) : '');
+    }
+  }
+
+  async function runRequest() {
+    const ep = endpoints[currentEndpoint];
+    const btn = document.getElementById('runBtn');
+    btn.classList.add('loading');
+    btn.innerHTML = '<span class="spinner"></span> Sending…';
+
+    setFlowStep(1, 'active');
+    document.getElementById('responseBar').style.display = 'none';
+    document.getElementById('responseBody').innerHTML = '<span class="placeholder-text">Waiting for response…</span>';
+
+    const start = Date.now();
+    let response, data, headers = {};
+
+    try {
+      setFlowStep(1, 'active');
+
+      if (ep.method === 'GET') {
+        let path = ep.path;
+        if (ep.fields.length) {
+          const rid = document.getElementById('field-report_id')?.value?.trim();
+          if (rid) path = path.replace('{report_id}', rid);
+        }
+        response = await fetch(BASE + path);
+      } else if (ep.fields.some(f => f.type === 'file')) {
+        if (!uploadedFile) {
+          showError('Please select a PDF file first.');
+          resetBtn();
+          return;
+        }
+        const fd = new FormData();
+        fd.append('file', uploadedFile);
+        response = await fetch(BASE + ep.path, { method: 'POST', body: fd });
+      } else {
+        const body = {};
+        ep.fields.forEach(f => {
+          const el = document.getElementById('field-' + f.name);
+          if (el) body[f.name] = el.value.trim();
+        });
+        response = await fetch(BASE + ep.path, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
+
+      const elapsed = Date.now() - start;
+      setFlowStep(2, 'active');
+
+      response.headers.forEach((v, k) => { headers[k] = v; });
+      data = await response.json();
+
+      setFlowStep(3, 'done');
+
+      // Autosave report_id
+      if (data.report_id) lastReportId = data.report_id;
+
+      const pill = document.getElementById('statusPill');
+      pill.textContent = response.status + ' ' + response.statusText;
+      pill.className = 'status-pill ' + (response.ok ? 'status-2xx' : 'status-4xx');
+
+      document.getElementById('respTime').textContent = `${elapsed}ms`;
+      document.getElementById('responseBar').style.display = 'flex';
+      document.getElementById('responseBody').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+      document.getElementById('headersBody').innerHTML = syntaxHighlight(JSON.stringify(headers, null, 2));
+
+      // Update cURL
+      document.getElementById('curlBody').textContent = buildCurl(ep);
+
+    } catch (err) {
+      setFlowStep(1, 'error');
+      showError('Network error: ' + err.message);
+    }
+
+    resetBtn();
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('runBtn');
+    btn.classList.remove('loading');
+    btn.innerHTML = '<span>▶</span> Send Request';
+  }
+
+  function showError(msg) {
+    document.getElementById('responseBody').innerHTML =
+      `<span style="color:var(--error)">⚠ ${msg}</span>`;
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function copyResponse() {
+    const txt = document.getElementById('responseBody').innerText;
+    navigator.clipboard.writeText(txt).then(() => {
+      const btn = event.currentTarget;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = 'Copy JSON', 1500);
+    });
+  }
+
+  async function refreshSavedReports() {
+    const container = document.getElementById('savedReports');
+    if (!container) return;
+    container.innerHTML = '<div class="empty">Loading…</div>';
+    try {
+      const res = await fetch(BASE + '/api/reports');
+      const reports = await res.json();
+      if (!reports.length) {
+        container.innerHTML = '<div class="empty">No reports uploaded yet. Use <strong>Upload Report</strong> first.</div>';
+        return;
+      }
+      container.innerHTML = reports.map(r => `
+        <div class="report-card" onclick="autofillReport('${r.report_id}')">
+          <div class="rid">${r.report_id}</div>
+          <div class="rname">📄 ${r.filename}</div>
+          <div class="rmeta">${r.pages} pages · ${r.tables} tables · ${r.text_blocks} text blocks · uploaded ${new Date(r.uploaded_at).toLocaleString()}</div>
+        </div>
+      `).join('');
+    } catch {
+      container.innerHTML = '<div class="empty">Failed to load reports.</div>';
+    }
+  }
+
+  function autofillReport(id) {
+    const el = document.getElementById('field-report_id');
+    if (el) {
+      el.value = id;
+      lastReportId = id;
+      el.style.borderColor = 'var(--accent2)';
+      setTimeout(() => el.style.borderColor = '', 1000);
+    }
+  }
+
+  async function runFlow() {
+    // Quick run: / and /health
+    const btn = event.currentTarget;
+    btn.style.opacity = '0.6';
+    const results = [];
+    for (const path of ['/', '/health']) {
+      try {
+        const r = await fetch(BASE + path);
+        const d = await r.json();
+        results.push({ path, status: r.status, data: d });
+      } catch (e) {
+        results.push({ path, status: 'ERR', data: { error: e.message } });
+      }
+    }
+    // Show results in a temporary modal-like area
+    alert(results.map(r => `${r.path} → ${r.status}\n${JSON.stringify(r.data, null, 2)}`).join('\n\n---\n\n'));
+    btn.style.opacity = '';
+  }
+
+  // Init
+  renderPanel();
+</script>
+</body>
+</html>
