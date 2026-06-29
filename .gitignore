@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+data/
+uploads/
+extracted_assets/
+.pytest_cache/
+.coverage
+htmlcov/
+*.zip
