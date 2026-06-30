@@ -44,6 +44,11 @@ def test_full_api_flow(tmp_path):
     ui_testing_response = client.get("/ui-testing")
     assert ui_testing_response.status_code == 200
     assert "text/html" in ui_testing_response.headers["content-type"]
+    assert "/docs" in ui_testing_response.text and "/ui-testing" in ui_testing_response.text
+
+    docs_response = client.get("/docs")
+    assert docs_response.status_code == 200
+    assert "Dashboard" in docs_response.text and "/ui-testing" in docs_response.text
 
     health_response = client.get("/health")
     assert health_response.status_code == 200

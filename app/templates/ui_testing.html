@@ -361,6 +361,18 @@
       .container { grid-template-columns: 1fr; }
       .sidebar { flex-direction: row; flex-wrap: wrap; }
     }
+    /* Sub-nav */
+    nav.subbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 32px;
+      display: flex;
+      gap: 24px;
+      font-size: 12.5px;
+    }
+    nav.subbar a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; }
+    nav.subbar a:hover { color: var(--text); border-bottom-color: var(--text); }
+    nav.subbar a.current { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -376,6 +388,11 @@
   <span>API Console</span>
   <div class="badge">v1.0.0</div>
 </header>
+<nav class="subbar">
+  <a href="/">Dashboard</a>
+  <a href="/ui-testing" class="current">API Console</a>
+  <a href="/docs">Swagger Docs</a>
+</nav>
 
 <div class="container">
   <!-- Sidebar -->
