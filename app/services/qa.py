@@ -79,7 +79,10 @@ def answer_question(report: dict[str, Any], question: str) -> dict[str, Any]:
     direct = _metric_answer(report, question)
     if direct:
         answer, sources = direct
-        return {"answer": answer, "confidence": "medium", "sources": sources}
+        # A direct hit on a known financial metric (revenue, EBITDA, etc.) found in the
+        # report's own text/table content is the strongest signal this system can give.
+        confidence = "high" if len(sources) >= 2 else "medium"
+        return {"answer": answer, "confidence": confidence, "sources": sources}
 
     terms = _tokens(question)
     if not terms:
@@ -106,9 +109,21 @@ def answer_question(report: dict[str, Any], question: str) -> dict[str, Any]:
     for _, source, text in best:
         snippet = re.sub(r"\s+", " ", text).strip()[:850]
         answer_lines.append(f"- {snippet}")
+
+    # Grade confidence by how much of the question's vocabulary the best chunk actually
+    # covers, not just how many chunks happened to score above zero.
+    top_score = best[0][0]
+    coverage = top_score / len(terms) if terms else 0
+    if coverage >= 1 and len(best) > 1:
+        confidence = "high"
+    elif coverage >= 0.5 or len(best) > 1:
+        confidence = "medium"
+    else:
+        confidence = "low"
+
     return {
         "answer": "Based on the extracted report content:\n" + "\n\n".join(answer_lines),
-        "confidence": "medium" if len(best) > 1 else "low",
+        "confidence": confidence,
         "sources": [source for _, source, _ in best],
     }
 

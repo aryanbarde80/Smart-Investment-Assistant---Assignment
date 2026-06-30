@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse
 
 from app.config import Settings, get_settings
 from app.schemas import QueryRequest, QueryResponse, ReportDetail, ReportSummary
-from app.services.extractor import extract_financial_report
+from app.services.extractor import UnreadablePdfError, extract_financial_report
 from app.services.qa import answer_question
 from app.services.security import validate_pdf_upload
 from app.storage import JsonReportStore
@@ -96,12 +96,15 @@ async def upload_report(
     store: JsonReportStore = Depends(get_store),
 ) -> ReportSummary:
     pdf_bytes = await validate_pdf_upload(file, settings)
-    report = extract_financial_report(
-        pdf_bytes=pdf_bytes,
-        original_filename=file.filename,
-        upload_dir=settings.upload_dir,
-        assets_dir=settings.extracted_assets_dir,
-    )
+    try:
+        report = extract_financial_report(
+            pdf_bytes=pdf_bytes,
+            original_filename=file.filename,
+            upload_dir=settings.upload_dir,
+            assets_dir=settings.extracted_assets_dir,
+        )
+    except UnreadablePdfError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     store.save(report)
     return _summary(report)
 

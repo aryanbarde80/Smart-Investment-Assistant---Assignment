@@ -92,3 +92,10 @@ def test_full_api_flow(tmp_path):
     )
     assert invalid_upload_response.status_code == 415
 
+    corrupted_pdf = b"%PDF-1.4\nthis has the right header but is not a real pdf body"
+    corrupted_response = client.post(
+        "/api/reports",
+        files={"file": ("corrupted.pdf", corrupted_pdf, "application/pdf")},
+    )
+    assert corrupted_response.status_code == 422
+

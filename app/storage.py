@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +16,19 @@ class JsonReportStore:
 
     def save(self, report: dict[str, Any]) -> None:
         path = self._path(report["report_id"])
-        path.write_text(json.dumps(report, indent=2, default=str), encoding="utf-8")
+        payload = json.dumps(report, indent=2, default=str)
+        # Write to a temp file in the same directory, then atomically replace the
+        # target so a crash or concurrent read mid-write can never see a half-written
+        # or corrupted report file.
+        fd, tmp_path = tempfile.mkstemp(dir=self.storage_dir, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
+                tmp_file.write(payload)
+            os.replace(tmp_path, path)
+        except Exception:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
 
     def get(self, report_id: str) -> dict[str, Any] | None:
         path = self._path(report_id)

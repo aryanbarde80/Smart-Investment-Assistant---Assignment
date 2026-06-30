@@ -64,6 +64,10 @@ def _structure_chart_text(ocr_text: str | None) -> str | None:
     return "\n".join(parts)
 
 
+class UnreadablePdfError(ValueError):
+    """Raised when a file passes the upload signature check but cannot actually be parsed as a PDF."""
+
+
 def extract_financial_report(
     pdf_bytes: bytes,
     original_filename: str | None,
@@ -82,7 +86,13 @@ def extract_financial_report(
     tables: list[dict[str, Any]] = []
     images: list[dict[str, Any]] = []
 
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    try:
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    except Exception as exc:
+        raise UnreadablePdfError(
+            "The file has a valid PDF header but its contents could not be parsed. "
+            "It may be corrupted, password-protected, or not a real PDF."
+        ) from exc
     for page_index, page in enumerate(doc, start=1):
         text = page.get_text("text").strip()
         if text:
@@ -112,13 +122,19 @@ def extract_financial_report(
                 }
             )
 
-    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-        for page_index, page in enumerate(pdf.pages, start=1):
-            for raw_table in page.extract_tables() or []:
-                rows = [[_clean_cell(cell) for cell in row] for row in raw_table if row]
-                rows = [row for row in rows if any(cell for cell in row)]
-                if rows:
-                    tables.append({"page": page_index, "rows": rows})
+    table_extraction_error: str | None = None
+    try:
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for page_index, page in enumerate(pdf.pages, start=1):
+                for raw_table in page.extract_tables() or []:
+                    rows = [[_clean_cell(cell) for cell in row] for row in raw_table if row]
+                    rows = [row for row in rows if any(cell for cell in row)]
+                    if rows:
+                        tables.append({"page": page_index, "rows": rows})
+    except Exception:
+        # Text/image extraction already succeeded via PyMuPDF; don't fail the whole
+        # upload just because the table-detection pass choked on this PDF's structure.
+        table_extraction_error = "Table extraction failed for this PDF; text and images were still extracted."
 
     all_text = "\n\n".join(block["text"] for block in text_blocks)
     all_text += "\n\n" + "\n\n".join(image.get("structured_text") or "" for image in images)
@@ -128,6 +144,8 @@ def extract_financial_report(
         "image_count": len(images),
         "has_chart_ocr": any(image.get("ocr_text") for image in images),
     }
+    if table_extraction_error:
+        metrics["table_extraction_error"] = table_extraction_error
 
     return {
         "report_id": report_id,
