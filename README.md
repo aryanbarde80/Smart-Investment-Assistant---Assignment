@@ -13,6 +13,12 @@ FastAPI backend for extracting structured financial data from PDF reports and an
 - Store extracted report data locally as JSON for simple integration and demos.
 - Includes `vercel.json` and `api/index.py` for Vercel Python deployment.
 
+## Web Interface
+
+- `GET /` — primary dashboard. Upload a PDF report, browse extracted text/tables/chart OCR, review flagged numeric values, and ask grounded questions, all from the browser.
+- `GET /ui-testing` — a separate developer console for exercising each API endpoint directly (raw request/response, useful for debugging and demos).
+- `GET /docs` — auto-generated Swagger UI.
+
 ## Project Structure
 
 ```text
@@ -55,7 +61,15 @@ pytest
 
 ### `GET /`
 
-Health check.
+Dashboard UI (HTML). Upload reports, browse extracted data, ask questions.
+
+### `GET /api/status`
+
+JSON health/status check.
+
+### `GET /ui-testing`
+
+Developer API console (HTML) for manually exercising every endpoint.
 
 ### `POST /api/reports`
 

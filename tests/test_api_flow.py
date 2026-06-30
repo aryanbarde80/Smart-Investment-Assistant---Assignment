@@ -34,7 +34,16 @@ def test_full_api_flow(tmp_path):
 
     root_response = client.get("/")
     assert root_response.status_code == 200
-    assert root_response.json()["status"] == "ok"
+    assert "text/html" in root_response.headers["content-type"]
+    assert "Smart Investment Assistant" in root_response.text
+
+    status_response = client.get("/api/status")
+    assert status_response.status_code == 200
+    assert status_response.json()["status"] == "ok"
+
+    ui_testing_response = client.get("/ui-testing")
+    assert ui_testing_response.status_code == 200
+    assert "text/html" in ui_testing_response.headers["content-type"]
 
     health_response = client.get("/health")
     assert health_response.status_code == 200

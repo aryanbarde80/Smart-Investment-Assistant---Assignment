@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Investment Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#ECEFE9;
+    --paper-raised:#F6F8F4;
+    --ink:#16201B;
+    --ink-soft:#5B6962;
+    --rule:#C7CFC4;
+    --rule-strong:#9DA89C;
+    --accent:#1F6F54;
+    --accent-soft:#DCE9DF;
+    --warn:#A6471F;
+    --warn-soft:#F3E0D5;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--accent-soft);}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .serif{font-family:'Source Serif 4',serif;}
+
+  /* Masthead */
+  .masthead{
+    border-bottom:1.5px solid var(--ink);
+    padding:28px 40px 18px;
+  }
+  .masthead-row{
+    display:flex;align-items:baseline;justify-content:space-between;
+    max-width:1180px;margin:0 auto;flex-wrap:wrap;gap:10px;
+  }
+  .masthead h1{
+    font-family:'Source Serif 4',serif;font-weight:700;font-size:26px;letter-spacing:-0.2px;margin:0;
+  }
+  .masthead .ledger-no{font-size:12px;color:var(--ink-soft);}
+  .masthead .tagline{
+    max-width:1180px;margin:6px auto 0;font-size:13.5px;color:var(--ink-soft);
+  }
+  nav.subbar{
+    border-bottom:1px solid var(--rule);
+    padding:10px 40px;
+    display:flex;gap:24px;
+    font-size:12.5px;
+  }
+  nav.subbar a{color:var(--ink-soft);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:2px;}
+  nav.subbar a:hover{color:var(--ink);border-bottom-color:var(--ink);}
+  nav.subbar a.current{color:var(--ink);font-weight:600;border-bottom-color:var(--accent);}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:34px 40px 80px;}
+
+  .grid{display:grid;grid-template-columns:380px 1fr;gap:28px;}
+  @media (max-width:920px){.grid{grid-template-columns:1fr;}}
+
+  .section-label{
+    display:flex;align-items:baseline;gap:10px;margin-bottom:14px;
+  }
+  .section-label .num{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);}
+  .section-label h2{font-family:'Source Serif 4',serif;font-size:17px;font-weight:600;margin:0;}
+  .section-label .rule{flex:1;height:1px;background:var(--rule-strong);}
+
+  .card{
+    background:var(--paper-raised);
+    border:1px solid var(--rule);
+    border-radius:2px;
+    padding:22px;
+  }
+
+  /* Upload */
+  .dropzone{
+    border:1.5px dashed var(--rule-strong);
+    padding:30px 18px;
+    text-align:center;
+    position:relative;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .dropzone.drag{border-color:var(--accent);background:var(--accent-soft);}
+  .dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+  .dropzone svg{stroke:var(--ink-soft);margin-bottom:8px;}
+  .dropzone .ddtext{font-size:13px;color:var(--ink-soft);}
+  .dropzone .ddtext strong{color:var(--ink);}
+  .dropzone .fname{margin-top:10px;font-size:12.5px;color:var(--accent);font-family:'IBM Plex Mono',monospace;word-break:break-all;}
+
+  .btn{
+    appearance:none;border:1px solid var(--ink);background:var(--ink);color:var(--paper-raised);
+    font-family:'IBM Plex Sans',sans-serif;font-weight:600;font-size:13px;
+    padding:10px 18px;cursor:pointer;letter-spacing:.2px;border-radius:2px;
+    transition:opacity .15s;
+  }
+  .btn:hover{opacity:.85;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.ghost{background:transparent;color:var(--ink);}
+  .btn.full{width:100%;margin-top:14px;}
+
+  .status-line{margin-top:12px;font-size:12.5px;color:var(--ink-soft);min-height:18px;}
+  .status-line.err{color:var(--warn);}
+  .status-line.ok{color:var(--accent);}
+
+  /* Ledger list of reports */
+  .ledger{margin-top:18px;}
+  .ledger-item{
+    display:flex;gap:14px;align-items:flex-start;
+    padding:13px 0;border-bottom:1px solid var(--rule);cursor:pointer;
+  }
+  .ledger-item:hover{background:var(--accent-soft);}
+  .ledger-item.active{background:var(--accent-soft);border-bottom-color:var(--accent);}
+  .ledger-item .idx{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);width:36px;flex-shrink:0;padding-top:2px;}
+  .ledger-item .meta .fname{font-size:13.5px;font-weight:500;}
+  .ledger-item .meta .sub{font-size:11.5px;color:var(--ink-soft);margin-top:3px;font-family:'IBM Plex Mono',monospace;}
+  .empty-note{font-size:13px;color:var(--ink-soft);padding:18px 0;font-style:italic;}
+
+  /* Workspace */
+  .workspace-empty{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:420px;color:var(--ink-soft);text-align:center;border:1px solid var(--rule);background:var(--paper-raised);
+  }
+  .workspace-empty svg{stroke:var(--rule-strong);margin-bottom:14px;}
+  .workspace-empty p{font-size:13.5px;max-width:280px;}
+
+  .stat-row{display:flex;gap:0;border:1px solid var(--rule);background:var(--paper-raised);margin-bottom:22px;}
+  .stat{flex:1;padding:14px 16px;border-right:1px solid var(--rule);}
+  .stat:last-child{border-right:none;}
+  .stat .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);}
+  .stat .value{font-family:'IBM Plex Mono',monospace;font-size:21px;margin-top:4px;}
+
+  .tabs{display:flex;gap:0;border-bottom:1.5px solid var(--ink);margin-bottom:18px;}
+  .tab{padding:9px 16px;font-size:13px;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;margin-bottom:-1.5px;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--accent);font-weight:600;}
+  .tabpanel{display:none;}
+  .tabpanel.active{display:block;}
+
+  .preview-text{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;line-height:1.7;
+    white-space:pre-wrap;background:var(--paper-raised);border:1px solid var(--rule);padding:18px;max-height:360px;overflow:auto;
+  }
+
+  table.fin-table{width:100%;border-collapse:collapse;margin-bottom:18px;font-size:12.5px;}
+  table.fin-table caption{text-align:left;font-size:11.5px;color:var(--ink-soft);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;}
+  table.fin-table td{border:1px solid var(--rule);padding:6px 9px;font-family:'IBM Plex Mono',monospace;}
+  table.fin-table tr:first-child td{font-weight:600;background:var(--accent-soft);}
+
+  .warning-list{list-style:none;margin:0;padding:0;}
+  .warning-list li{
+    font-size:12.5px;padding:8px 12px;background:var(--warn-soft);color:var(--warn);
+    border-left:2px solid var(--warn);margin-bottom:6px;font-family:'IBM Plex Mono',monospace;
+  }
+
+  .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+  .img-card{border:1px solid var(--rule);background:var(--paper-raised);padding:12px;}
+  .img-card .hdr{font-size:11.5px;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-bottom:6px;}
+  .img-card .ocr{font-size:11.5px;line-height:1.6;white-space:pre-wrap;color:var(--ink);max-height:160px;overflow:auto;}
+  .img-card .none{font-size:11.5px;color:var(--ink-soft);font-style:italic;}
+
+  /* Q&A */
+  .qa-log{display:flex;flex-direction:column;gap:14px;margin-bottom:16px;max-height:380px;overflow:auto;}
+  .qa-pair{border-left:2px solid var(--rule-strong);padding-left:14px;}
+  .qa-q{font-size:13.5px;font-weight:600;}
+  .qa-a{font-size:13px;color:var(--ink);margin-top:6px;white-space:pre-wrap;line-height:1.65;}
+  .qa-meta{font-size:11px;color:var(--ink-soft);margin-top:6px;font-family:'IBM Plex Mono',monospace;}
+  .qa-input-row{display:flex;gap:10px;border-top:1px solid var(--rule);padding-top:16px;}
+  .qa-input-row input{
+    flex:1;border:1px solid var(--rule-strong);background:var(--paper-raised);padding:10px 12px;
+    font-family:'IBM Plex Sans',sans-serif;font-size:13.5px;color:var(--ink);border-radius:2px;
+  }
+  .qa-input-row input:focus{outline:none;border-color:var(--accent);}
+  .qa-suggest{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .qa-suggest button{
+    border:1px solid var(--rule-strong);background:transparent;color:var(--ink-soft);
+    font-size:11.5px;padding:5px 11px;border-radius:20px;cursor:pointer;
+  }
+  .qa-suggest button:hover{border-color:var(--accent);color:var(--accent);}
+
+  footer{
+    max-width:1180px;margin:0 auto;padding:0 40px 50px;font-size:11.5px;color:var(--ink-soft);
+    display:flex;justify-content:space-between;border-top:1px solid var(--rule);padding-top:16px;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-row">
+    <h1>Smart Investment Assistant</h1>
+    <span class="ledger-no mono">Vol. I — Report Ledger</span>
+  </div>
+  <p class="tagline">Upload a financial report, review what was extracted, and ask questions grounded in the document.</p>
+</div>
+<nav class="subbar">
+  <a href="/" class="current">Dashboard</a>
+  <a href="/ui-testing">API Console</a>
+  <a href="/docs">Swagger Docs</a>
+</nav>
+
+<div class="wrap">
+  <div class="grid">
+
+    <!-- LEFT: Upload + Ledger of reports -->
+    <div>
+      <div class="section-label"><span class="num mono">01</span><h2>New Entry</h2><span class="rule"></span></div>
+      <div class="card">
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".pdf,application/pdf" />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          <div class="ddtext"><strong>Drop a PDF report</strong> or click to browse</div>
+          <div class="fname" id="fname"></div>
+        </div>
+        <button class="btn full" id="uploadBtn" disabled>Process Report</button>
+        <div class="status-line" id="uploadStatus"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:30px;"><span class="num mono">02</span><h2>Ledger</h2><span class="rule"></span></div>
+      <div class="card">
+        <div class="ledger" id="ledgerList">
+          <div class="empty-note">No reports processed yet. Upload one above to begin.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Workspace -->
+    <div>
+      <div class="section-label"><span class="num mono">03</span><h2>Report Workspace</h2><span class="rule"></span></div>
+      <div id="workspace">
+        <div class="workspace-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+          <p>Select a report from the ledger, or upload one, to view extracted data and ask questions.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>Smart Investment Assistant — FastAPI backend</span>
+  <span class="mono">local-first · no external AI calls</span>
+</footer>
+
+<script>
+const BASE = window.location.origin;
+let pendingFile = null;
+let reports = [];
+let activeReportId = null;
+let qaHistory = {};
+
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadStatus = document.getElementById('uploadStatus');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === 'application/pdf') setFile(file);
+});
+fileInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) setFile(file);
+});
+
+function setFile(file) {
+  pendingFile = file;
+  document.getElementById('fname').textContent = file.name;
+  uploadBtn.disabled = false;
+}
+
+uploadBtn.addEventListener('click', async () => {
+  if (!pendingFile) return;
+  uploadBtn.disabled = true;
+  uploadBtn.textContent = 'Processing…';
+  uploadStatus.textContent = '';
+  uploadStatus.className = 'status-line';
+
+  const form = new FormData();
+  form.append('file', pendingFile);
+  try {
+    const res = await fetch(`${BASE}/api/reports`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Upload failed.');
+    uploadStatus.textContent = `Processed "${data.filename}" — ${data.pages} page(s), ${data.tables} table(s), ${data.images} image(s).`;
+    uploadStatus.className = 'status-line ok';
+    pendingFile = null;
+    document.getElementById('fname').textContent = '';
+    await refreshLedger();
+    selectReport(data.report_id);
+  } catch (err) {
+    uploadStatus.textContent = err.message;
+    uploadStatus.className = 'status-line err';
+  } finally {
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = 'Process Report';
+  }
+});
+
+async function refreshLedger() {
+  const res = await fetch(`${BASE}/api/reports`);
+  reports = await res.json();
+  const list = document.getElementById('ledgerList');
+  if (!reports.length) {
+    list.innerHTML = '<div class="empty-note">No reports processed yet. Upload one above to begin.</div>';
+    return;
+  }
+  list.innerHTML = reports.map((r, i) => `
+    <div class="ledger-item ${r.report_id === activeReportId ? 'active' : ''}" onclick="selectReport('${r.report_id}')">
+      <div class="idx mono">${String(i + 1).padStart(3, '0')}</div>
+      <div class="meta">
+        <div class="fname">${escapeHtml(r.filename)}</div>
+        <div class="sub">${r.pages}p · ${r.tables} tables · ${r.images} images${r.numeric_warnings.length ? ' · ' + r.numeric_warnings.length + ' flagged' : ''}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function selectReport(id) {
+  activeReportId = id;
+  if (!qaHistory[id]) qaHistory[id] = [];
+  document.querySelectorAll('.ledger-item').forEach(el => el.classList.remove('active'));
+  refreshLedger();
+
+  const ws = document.getElementById('workspace');
+  ws.innerHTML = '<div class="workspace-empty"><p>Loading report…</p></div>';
+
+  const res = await fetch(`${BASE}/api/reports/${id}`);
+  if (!res.ok) {
+    ws.innerHTML = '<div class="workspace-empty"><p>Could not load this report.</p></div>';
+    return;
+  }
+  const r = await res.json();
+  renderWorkspace(r);
+}
+
+function renderWorkspace(r) {
+  const ws = document.getElementById('workspace');
+
+  const tablesHtml = r.tables_preview.length
+    ? r.tables_preview.map((t, i) => `
+        <table class="fin-table">
+          <caption>Table ${i + 1} — page ${t.page}</caption>
+          ${t.rows.map(row => `<tr>${row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+        </table>`).join('')
+    : '<p class="empty-note">No tables detected in this report.</p>';
+
+  const imagesHtml = r.images_preview.length
+    ? `<div class="img-grid">${r.images_preview.map(img => `
+        <div class="img-card">
+          <div class="hdr">page ${img.page} · image ${img.image_index} · ${img.width || '?'}×${img.height || '?'}</div>
+          <div class="${img.ocr_text ? 'ocr' : 'none'}">${img.ocr_text ? escapeHtml(img.structured_text || img.ocr_text) : 'No OCR text extracted (chart/decorative image or OCR unavailable).'}</div>
+        </div>`).join('')}</div>`
+    : '<p class="empty-note">No embedded images in this report.</p>';
+
+  const warningsHtml = r.numeric_warnings.length
+    ? `<ul class="warning-list">${r.numeric_warnings.map(w => `<li>${escapeHtml(w)}</li>`).join('')}</ul>`
+    : '<p class="empty-note">No numeric values flagged for manual review.</p>';
+
+  ws.innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="label">Pages</div><div class="value">${r.pages}</div></div>
+      <div class="stat"><div class="label">Text Blocks</div><div class="value">${r.text_blocks}</div></div>
+      <div class="stat"><div class="label">Tables</div><div class="value">${r.tables}</div></div>
+      <div class="stat"><div class="label">Images</div><div class="value">${r.images}</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="tables">Tables</div>
+      <div class="tab" data-tab="images">Charts &amp; Images</div>
+      <div class="tab" data-tab="warnings">Flagged Values</div>
+      <div class="tab" data-tab="ask">Ask</div>
+    </div>
+
+    <div class="tabpanel active" data-panel="overview">
+      <div class="preview-text">${escapeHtml(r.text_preview || 'No extractable text found in this report.')}</div>
+    </div>
+    <div class="tabpanel" data-panel="tables">${tablesHtml}</div>
+    <div class="tabpanel" data-panel="images">${imagesHtml}</div>
+    <div class="tabpanel" data-panel="warnings">${warningsHtml}</div>
+    <div class="tabpanel" data-panel="ask">
+      <div class="qa-suggest">
+        ${['What was the total revenue?', 'What are the net earnings?', 'Show me the EBITDA figures.', 'Summarize the key financial metrics.']
+          .map(q => `<button onclick="askPrefill('${q.replace(/'/g, "\\'")}')">${q}</button>`).join('')}
+      </div>
+      <div class="qa-log" id="qaLog"></div>
+      <div class="qa-input-row">
+        <input type="text" id="qaInput" placeholder="Ask a question about this report…" onkeydown="if(event.key==='Enter') askQuestion()" />
+        <button class="btn" onclick="askQuestion()">Ask</button>
+      </div>
+    </div>
+  `;
+
+  ws.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      ws.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      ws.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      ws.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+    });
+  });
+
+  renderQaLog();
+}
+
+function askPrefill(q) {
+  document.getElementById('qaInput').value = q;
+  askQuestion();
+}
+
+function renderQaLog() {
+  const log = document.getElementById('qaLog');
+  if (!log) return;
+  const history = qaHistory[activeReportId] || [];
+  if (!history.length) {
+    log.innerHTML = '<p class="empty-note">No questions asked yet for this report.</p>';
+    return;
+  }
+  log.innerHTML = history.map(item => `
+    <div class="qa-pair">
+      <div class="qa-q">${escapeHtml(item.question)}</div>
+      <div class="qa-a">${escapeHtml(item.answer)}</div>
+      <div class="qa-meta">confidence: ${item.confidence}${item.sources && item.sources.length ? ' · sources: ' + item.sources.join(', ') : ''}</div>
+    </div>
+  `).join('');
+  log.scrollTop = log.scrollHeight;
+}
+
+async function askQuestion() {
+  const input = document.getElementById('qaInput');
+  const question = input.value.trim();
+  if (!question || !activeReportId) return;
+  input.value = '';
+  input.disabled = true;
+  try {
+    const res = await fetch(`${BASE}/api/query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ report_id: activeReportId, question }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Query failed.');
+    qaHistory[activeReportId].push(data);
+    renderQaLog();
+  } catch (err) {
+    qaHistory[activeReportId].push({ question, answer: err.message, confidence: 'error', sources: [] });
+    renderQaLog();
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+}
+
+refreshLedger();
+</script>
+
+</body>
+</html>

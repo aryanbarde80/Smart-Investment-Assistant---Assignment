@@ -45,8 +45,15 @@ def _summary(report: dict) -> ReportSummary:
     )
 
 
-@app.get("/", tags=["Health"])
-def root() -> dict[str, str]:
+@app.get("/", tags=["UI"], response_class=HTMLResponse)
+def root() -> HTMLResponse:
+    """Primary dashboard: upload reports, browse extracted data, ask questions."""
+    html = (_TEMPLATES_DIR / "index.html").read_text(encoding="utf-8")
+    return HTMLResponse(content=html)
+
+
+@app.get("/api/status", tags=["Health"])
+def api_status() -> dict[str, str]:
     return {"status": "ok", "service": "Smart Investment Assistant"}
 
 
