@@ -149,16 +149,28 @@ vercel --prod
 
 Note: Vercel serverless storage is ephemeral. For production persistence, connect the app to a hosted database and cloud object storage.
 
+## Approach, Tools & Architecture
+
+A full write-up of the approach, tool choices, and system architecture is in
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+## Sample Report
+
+A synthetic but realistic two-page sample report (narrative summary, ruled
+income statement table, ruled balance sheet table) is included at
+[`docs/sample-report/aurora-capital-fy2025.pdf`](docs/sample-report/aurora-capital-fy2025.pdf)
+for demoing upload, extraction, and Q&A end to end.
+
 ## Demo Flow
 
 1. Start the server with `uvicorn app.main:app --reload`.
-2. Open Swagger UI at `/docs`.
-3. Use `POST /api/reports` to upload the sample PDF.
+2. Open the dashboard at `/` to upload `docs/sample-report/aurora-capital-fy2025.pdf` and explore extracted text, tables, and ask questions directly in the browser.
+3. Or open Swagger UI at `/docs` and use `POST /api/reports` to upload the sample PDF.
 4. Copy the returned `report_id`.
 5. Use `POST /api/query` with questions like:
-   - `What is the revenue mentioned in the report?`
-   - `Summarize the profit figures.`
-   - `Which tables contain cash or assets?`
+   - `What was the total revenue?`
+   - `What was the EBITDA?`
+   - `Summarize the key financial metrics.`
 
 Swagger screenshot evidence and live endpoint test results are documented in [`docs/SWAGGER_DEMO.md`](docs/SWAGGER_DEMO.md).
 

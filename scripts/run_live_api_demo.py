@@ -61,15 +61,30 @@ def multipart_file(field_name: str, filename: str, data: bytes, content_type: st
     return body, f"multipart/form-data; boundary={boundary}"
 
 
+def call_html(method: str, path: str) -> dict:
+    req = request.Request(BASE_URL + path, method=method)
+    try:
+        with request.urlopen(req, timeout=20) as response:
+            payload = response.read().decode("utf-8")
+            return {"status": response.status, "content_type": response.headers.get("content-type"), "length": len(payload)}
+    except HTTPError as exc:
+        payload = exc.read().decode("utf-8")
+        return {"status": exc.code, "content_type": exc.headers.get("content-type"), "length": len(payload)}
+
+
 def write_html(results: dict) -> None:
     rows = []
     for endpoint, result in results.items():
+        if "response" in result:
+            body = f"<pre>{json.dumps(result['response'], indent=2)}</pre>"
+        else:
+            body = f"<p><strong>Content-Type:</strong> {result.get('content_type')} &middot; <strong>Bytes:</strong> {result.get('length')}</p>"
         rows.append(
             f"""
             <section>
               <h2>{endpoint}</h2>
               <p><strong>Status:</strong> {result["status"]}</p>
-              <pre>{json.dumps(result["response"], indent=2)}</pre>
+              {body}
             </section>
             """
         )
@@ -105,7 +120,9 @@ def main() -> None:
     )
 
     results: dict[str, dict] = {}
-    results["GET /"] = call_json("GET", "/")
+    results["GET / (dashboard UI)"] = call_html("GET", "/")
+    results["GET /ui-testing (API console UI)"] = call_html("GET", "/ui-testing")
+    results["GET /api/status"] = call_json("GET", "/api/status")
     results["GET /health"] = call_json("GET", "/health")
     results["POST /api/reports"] = call_json(
         "POST", "/api/reports", pdf_body, {"Content-Type": pdf_content_type}

@@ -18,7 +18,19 @@
       <p class="note">These endpoint results were produced against the same local FastAPI server shown in Swagger UI.</p>
       
             <section>
-              <h2>GET /</h2>
+              <h2>GET / (dashboard UI)</h2>
+              <p><strong>Status:</strong> 200</p>
+              <p><strong>Content-Type:</strong> text/html; charset=utf-8 &middot; <strong>Bytes:</strong> 19790</p>
+            </section>
+            
+            <section>
+              <h2>GET /ui-testing (API console UI)</h2>
+              <p><strong>Status:</strong> 200</p>
+              <p><strong>Content-Type:</strong> text/html; charset=utf-8 &middot; <strong>Bytes:</strong> 29839</p>
+            </section>
+            
+            <section>
+              <h2>GET /api/status</h2>
               <p><strong>Status:</strong> 200</p>
               <pre>{
   "status": "ok",
@@ -38,9 +50,9 @@
               <h2>POST /api/reports</h2>
               <p><strong>Status:</strong> 200</p>
               <pre>{
-  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "report_id": "74110ed16d784d14ad2777b59a9ad0aa",
   "filename": "demo-financial-report.pdf",
-  "uploaded_at": "2026-06-29T12:27:35.793310Z",
+  "uploaded_at": "2026-06-30T10:43:25.963623Z",
   "pages": 1,
   "text_blocks": 1,
   "tables": 0,
@@ -54,9 +66,9 @@
               <p><strong>Status:</strong> 200</p>
               <pre>[
   {
-    "report_id": "83bc8748b6b44a158591271cb6e14efe",
+    "report_id": "74110ed16d784d14ad2777b59a9ad0aa",
     "filename": "demo-financial-report.pdf",
-    "uploaded_at": "2026-06-29T12:27:35.793310Z",
+    "uploaded_at": "2026-06-30T10:43:25.963623Z",
     "pages": 1,
     "text_blocks": 1,
     "tables": 0,
@@ -64,11 +76,21 @@
     "numeric_warnings": []
   },
   {
-    "report_id": "1f167dc0682a43bd9cc44c838d89d9cb",
-    "filename": "sample.pdf",
-    "uploaded_at": "2026-06-29T12:03:53.979667Z",
-    "pages": 1,
-    "text_blocks": 1,
+    "report_id": "bb89755855ef4a2484e8ae6895351116",
+    "filename": "aurora-capital-fy2025.pdf",
+    "uploaded_at": "2026-06-30T10:43:09.009753Z",
+    "pages": 2,
+    "text_blocks": 2,
+    "tables": 2,
+    "images": 0,
+    "numeric_warnings": []
+  },
+  {
+    "report_id": "a3671702d24549d1a0e617cc5d4e655d",
+    "filename": "aurora-capital-fy2025.pdf",
+    "uploaded_at": "2026-06-30T10:42:45.673750Z",
+    "pages": 2,
+    "text_blocks": 2,
     "tables": 0,
     "images": 0,
     "numeric_warnings": []
@@ -80,9 +102,9 @@
               <h2>GET /api/reports/{report_id}</h2>
               <p><strong>Status:</strong> 200</p>
               <pre>{
-  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "report_id": "74110ed16d784d14ad2777b59a9ad0aa",
   "filename": "demo-financial-report.pdf",
-  "uploaded_at": "2026-06-29T12:27:35.793310Z",
+  "uploaded_at": "2026-06-30T10:43:25.963623Z",
   "pages": 1,
   "text_blocks": 1,
   "tables": 0,
@@ -112,7 +134,7 @@
               <h2>POST /api/query</h2>
               <p><strong>Status:</strong> 200</p>
               <pre>{
-  "report_id": "83bc8748b6b44a158591271cb6e14efe",
+  "report_id": "74110ed16d784d14ad2777b59a9ad0aa",
   "question": "What was the revenue and net profit?",
   "answer": "Relevant extracted financial data:\n- Smart Investment Assistant Demo Financial Report Fiscal Year 2025 Revenue: $1,250,000 Net Profit: $310,000 EBITDA: $470,000 Cash and equivalents: $90,000 Total assets: $2,400,000 Total liabilities: $860,000",
   "confidence": "medium",
