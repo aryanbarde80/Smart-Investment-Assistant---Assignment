@@ -538,6 +538,10 @@
     },
   };
 
+  function escapeForPre(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   function syntaxHighlight(json) {
     if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
     return json
@@ -788,12 +792,24 @@
       setFlowStep(2, 'active');
 
       response.headers.forEach((v, k) => { headers[k] = v; });
-      data = await response.json();
+
+      const contentType = response.headers.get('content-type') || '';
+      let displayBody = '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+        if (data && data.report_id) lastReportId = data.report_id;
+        displayBody = syntaxHighlight(JSON.stringify(data, null, 2));
+      } else if (contentType.includes('text/html')) {
+        const rawHtml = await response.text();
+        displayBody = `<span style="color:var(--accent2)">// HTML response (${rawHtml.length} bytes) — rendered at ${response.url}</span>\n`
+          + escapeForPre(rawHtml.slice(0, 600))
+          + (rawHtml.length > 600 ? '\n<span style="color:var(--muted)">… truncated</span>' : '');
+      } else {
+        const raw = await response.text();
+        displayBody = escapeForPre(raw.slice(0, 1200));
+      }
 
       setFlowStep(3, 'done');
-
-      // Autosave report_id
-      if (data.report_id) lastReportId = data.report_id;
 
       const pill = document.getElementById('statusPill');
       pill.textContent = response.status + ' ' + response.statusText;
@@ -801,7 +817,7 @@
 
       document.getElementById('respTime').textContent = `${elapsed}ms`;
       document.getElementById('responseBar').style.display = 'flex';
-      document.getElementById('responseBody').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+      document.getElementById('responseBody').innerHTML = displayBody;
       document.getElementById('headersBody').innerHTML = syntaxHighlight(JSON.stringify(headers, null, 2));
 
       // Update cURL
@@ -880,13 +896,22 @@
     const btn = event.currentTarget;
     btn.style.opacity = '0.6';
     const results = [];
-    for (const path of ['/', '/health']) {
+    for (const path of ['/health', '/api/status']) {
       try {
+        const t0 = Date.now();
         const r = await fetch(BASE + path);
-        const d = await r.json();
-        results.push({ path, status: r.status, data: d });
+        const elapsed = Date.now() - t0;
+        const ct = r.headers.get('content-type') || '';
+        let d;
+        if (ct.includes('application/json')) {
+          d = await r.json();
+        } else {
+          const txt = await r.text();
+          d = { _type: 'html', bytes: txt.length, preview: txt.slice(0, 80).replace(/\s+/g, ' ') };
+        }
+        results.push({ path, status: r.status, ok: r.ok, data: d, elapsed });
       } catch (e) {
-        results.push({ path, status: 'ERR', data: { error: e.message } });
+        results.push({ path, status: 'ERR', ok: false, data: { error: e.message }, elapsed: 0 });
       }
     }
     // Show results in a temporary modal-like area
