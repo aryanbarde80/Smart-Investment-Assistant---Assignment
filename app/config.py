@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     extracted_assets_dir: Path = BASE_DIR / "extracted_assets"
     allowed_content_types: set[str] = {"application/pdf"}
 
+    # Optional: DeepSeek LLM layer for richer Q&A answers.
+    # Set this environment variable to enable it:
+    #   SIA_DEEPSEEK_API_KEY=sk-...
+    deepseek_api_key: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_prefix="SIA_")
 
 
