@@ -412,6 +412,13 @@
         <div class="endpoint-path">/health</div>
       </div>
     </button>
+    <button class="endpoint-btn" onclick="selectEndpoint('api-status')">
+      <span class="method GET">GET</span>
+      <div>
+        <div class="endpoint-name">API Status</div>
+        <div class="endpoint-path">/api/status</div>
+      </div>
+    </button>
 
     <div class="sidebar-title" style="margin-top:12px">Reports</div>
     <button class="endpoint-btn" onclick="selectEndpoint('upload-report')">
@@ -450,7 +457,7 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="M13 2L4.5 13.5H11L10 22l9.5-13H13L13 2z"/></svg>
       <div>
         <div class="endpoint-name">Run All Health</div>
-        <div class="endpoint-path">/ + /health</div>
+        <div class="endpoint-path">/ + /health + /api/status</div>
       </div>
     </button>
   </aside>
@@ -476,6 +483,11 @@
     'health-check': {
       method: 'GET', path: '/health', name: 'Health Check',
       desc: 'Returns service health status.',
+      fields: [],
+    },
+    'api-status': {
+      method: 'GET', path: '/api/status', name: 'API Status',
+      desc: 'Returns JSON status and service name.',
       fields: [],
     },
     'upload-report': {
@@ -878,7 +890,25 @@
       }
     }
     // Show results in a temporary modal-like area
-    alert(results.map(r => `${r.path} -> ${r.status}\n${JSON.stringify(r.data, null, 2)}`).join('\n\n---\n\n'));
+    const main = document.getElementById('mainPanel');
+
+    // Switch to a results view
+    document.querySelectorAll('.endpoint-btn').forEach(b => b.classList.remove('active'));
+    main.innerHTML = `
+      <div class="panel">
+        <div class="panel-header"><h2>⚡ Health Check Results</h2><span class="desc">All health endpoints fired in sequence</span></div>
+        <div class="panel-body" id="flowResults">${results.map(r => `
+          <div style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--code-bg);border-bottom:1px solid var(--border)">
+              <span class="method GET">GET</span>
+              <code style="color:var(--accent2)">${r.path}</code>
+              <span class="status-pill ${r.ok ? 'status-2xx' : 'status-4xx'}">${r.status}</span>
+              <span style="color:var(--muted);font-size:12px;margin-left:auto">${r.elapsed}ms</span>
+            </div>
+            <pre style="padding:14px;font-size:12px">${syntaxHighlight(JSON.stringify(r.data, null, 2))}</pre>
+          </div>
+        `).join('')}</div>
+      </div>`;
     btn.style.opacity = '';
   }
 
