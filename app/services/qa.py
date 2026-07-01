@@ -52,78 +52,83 @@ def _score(question_terms: list[str], text: str) -> int:
     return sum(counts[term] for term in question_terms)
 
 
-def _metric_answer(report: dict[str, Any], question: str) -> tuple[str, list[str]] | None:
+def _metric_answer(report: dict[str, Any], question: str) -> tuple[str, list[str], list[tuple[str, str]]] | None:
     lowered = question.lower()
     metric_terms = [alias for aliases in METRIC_ALIASES.values() for alias in aliases if alias in lowered]
     if not metric_terms:
         return None
 
-    matches: list[str] = []
+    matched_chunks: list[tuple[str, str]] = []
     sources: list[str] = []
     for source, text in _chunks(report):
         text_lower = text.lower()
         if any(term in text_lower for term in metric_terms):
             compact = re.sub(r"\s+", " ", text).strip()
-            matches.append(compact[:700])
+            matched_chunks.append((source, compact[:700]))
             sources.append(source)
-        if len(matches) >= 3:
+        if len(matched_chunks) >= 3:
             break
 
-    if not matches:
+    if not matched_chunks:
         return None
-    answer = "Relevant extracted financial data:\n" + "\n\n".join(f"- {match}" for match in matches)
-    return answer, sources
+
+    answer = "Relevant extracted financial data:\n" + "\n\n".join(f"- {text}" for _, text in matched_chunks)
+    return answer, sources, matched_chunks
 
 
 def answer_question(report: dict[str, Any], question: str) -> dict[str, Any]:
+    # ── Step 1: keyword retrieval ──────────────────────────────────────────────
     direct = _metric_answer(report, question)
     if direct:
-        answer, sources = direct
-        # A direct hit on a known financial metric (revenue, EBITDA, etc.) found in the
-        # report's own text/table content is the strongest signal this system can give.
+        fallback_answer, sources, matched_chunks = direct
         confidence = "high" if len(sources) >= 2 else "medium"
-        return {"answer": answer, "confidence": confidence, "sources": sources}
-
-    terms = _tokens(question)
-    if not terms:
-        return {
-            "answer": "Please ask a more specific question about the report.",
-            "confidence": "low",
-            "sources": [],
-        }
-
-    scored = sorted(
-        ((_score(terms, text), source, text) for source, text in _chunks(report)),
-        key=lambda item: item[0],
-        reverse=True,
-    )
-    best = [item for item in scored if item[0] > 0][:4]
-    if not best:
-        return {
-            "answer": "I could not find matching extracted content for that question in this report.",
-            "confidence": "low",
-            "sources": [],
-        }
-
-    answer_lines = []
-    for _, source, text in best:
-        snippet = re.sub(r"\s+", " ", text).strip()[:850]
-        answer_lines.append(f"- {snippet}")
-
-    # Grade confidence by how much of the question's vocabulary the best chunk actually
-    # covers, not just how many chunks happened to score above zero.
-    top_score = best[0][0]
-    coverage = top_score / len(terms) if terms else 0
-    if coverage >= 1 and len(best) > 1:
-        confidence = "high"
-    elif coverage >= 0.5 or len(best) > 1:
-        confidence = "medium"
+        retrieval_result = {"answer": fallback_answer, "confidence": confidence, "sources": sources}
     else:
-        confidence = "low"
+        terms = _tokens(question)
+        if not terms:
+            return {
+                "answer": "Please ask a more specific question about the report.",
+                "confidence": "low",
+                "sources": [],
+            }
 
-    return {
-        "answer": "Based on the extracted report content:\n" + "\n\n".join(answer_lines),
-        "confidence": confidence,
-        "sources": [source for _, source, _ in best],
-    }
+        scored = sorted(
+            ((_score(terms, text), source, text) for source, text in _chunks(report)),
+            key=lambda item: item[0],
+            reverse=True,
+        )
+        best = [item for item in scored if item[0] > 0][:4]
+        if not best:
+            return {
+                "answer": "I could not find matching extracted content for that question in this report.",
+                "confidence": "low",
+                "sources": [],
+            }
 
+        matched_chunks = [(source, text) for _, source, text in best]
+        sources = [source for _, source, _ in best]
+        answer_lines = [f"- {re.sub(r'\\s+', ' ', text).strip()[:850]}" for _, source, text in best]
+
+        top_score = best[0][0]
+        coverage = top_score / len(terms) if terms else 0
+        if coverage >= 1 and len(best) > 1:
+            confidence = "high"
+        elif coverage >= 0.5 or len(best) > 1:
+            confidence = "medium"
+        else:
+            confidence = "low"
+
+        fallback_answer = "Based on the extracted report content:\n" + "\n\n".join(answer_lines)
+        retrieval_result = {"answer": fallback_answer, "confidence": confidence, "sources": sources}
+
+    # ── Step 2: optional DeepSeek LLM synthesis ────────────────────────────────
+    # Import here to avoid circular imports and keep the LLM layer truly optional.
+    try:
+        from app.services.llm import ask_llm
+        llm_result = ask_llm(question, matched_chunks, fallback_answer)
+        if llm_result:
+            return llm_result
+    except Exception:
+        pass  # any import or runtime error → fall through to retrieval answer
+
+    return retrieval_result
